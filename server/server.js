@@ -26,7 +26,7 @@ const http =require("http");
     req.on("data", (chunk) => {
       body += chunk;
     });
-    // When all data has arrived
+     // When all data has arrived
     req.on("end", () => {
       const parsedBody = JSON.parse(body);
 
