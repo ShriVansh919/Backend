@@ -1,5 +1,7 @@
 const http =require("http");
 
+
+
 /*
   Create an HTTP server.
   This callback function runs EVERY time a client sends a request.
@@ -7,7 +9,7 @@ const http =require("http");
   const method = req.method;
   const url = req.url;
 
-  // Handle GET request to home route
+    // Handle GET request to home route
   if (method === "GET" && url === "/") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("Welcome to the Home Page");
