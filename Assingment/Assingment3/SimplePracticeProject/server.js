@@ -1,91 +1,47 @@
-const http = require("http");
-const fs = require("fs");
+const http =require("http");
+const fs =require("fs");
+const path = require("path");
+const { json } = require("stream/consumers");
+const filePath = path.join(__dirname, "notes1.json");
 
 const server = http.createServer((req, res) => {
+    const url =new URL(req.url,`http://${req.headers.host}`);
+    const pathname = url.pathname;
+    const method = req.method;
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = url.pathname;
 
-  // HOME ROUTE
-  if (req.method === "GET" && pathname === "/") {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Welcome to Notes API");
-  }
-
-  // GET ALL NOTES OR SINGLE NOTE
-  else if (req.method === "GET" && pathname === "/notes") {
-
-    const id = url.searchParams.get("id");
-
-    fs.readFile("notes.json", "utf8", (err, data) => {
-      if (err) {
-        res.writeHead(500);
-        res.end("Error reading notes");
-        return;
-      }
-
-      const notes = JSON.parse(data);
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-
-      if (id) {
-        const note = notes.find((n) => n.id == id);
-        res.end(JSON.stringify(note || {}));
-      } else {
-        res.end(JSON.stringify(notes));
-      }
-    });
-  }
-
-  // ADD NEW NOTE
-  else if (req.method === "POST" && pathname === "/notes") {
-
-    let body = "";
-
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
-
-    req.on("end", () => {
-
-      const newNote = JSON.parse(body);
-
-      fs.readFile("notes.json", "utf8", (err, data) => {
-        if (err) {
-          res.writeHead(500);
-          res.end("Error reading notes");
-          return;
+    if(method === "GET" && pathname === "/") {
+      res.writeHead(200, "server responded")
+      res.end()
+    } else if(method == "GET" && pathname == "/notes") {
+      fs.readFile(filePath, "utf-8", (err, data) => {
+        if(err) {
+          res.writeHead(500, "cannot get data")
+          res.end()
+        } else {
+          res.writeHead(200, {"content-type" : "application/json"});
+          res.end(data);
         }
+      })
+    } else if(method == "POST" && pathname == "/notes") {
+      let body = "";
+      req.on("data", (chunk) => {
+        body += chunk;
+      })
 
-        const notes = JSON.parse(data);
-        notes.push(newNote);
-
-        fs.writeFile(
-          "notes.json",
-          JSON.stringify(notes),
-          (err) => {
-            if (err) {
-              res.writeHead(500);
-              res.end("Error saving note");
-              return;
-            }
-
-            res.writeHead(201, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Note added" }));
-          }
-        );
-      });
-    });
-  }
-
-  // NOT FOUND ROUTE
-  else {
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Route not found");
-  }
+      req.on("end", () => {
+        fs.readFile(filePath, "utf-8", (err, data) => {
+          const notes = JSON.parse(data);
+          const parsedBody = JSON.parse(body);
+          notes.push(parsedBody)
+          fs.writeFile(filePath, JSON.stringify(notes), ()=> {
+            res.end(201, "done!")
+          })
+        })
+      })
+    }
 
 });
 
-server.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+server.listen(3000,() => {console.log("Server running on http://localhost:3000");
 });
